@@ -1,0 +1,592 @@
+<!-- <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Department</title>
+  </head>
+  <body onload="initializePage()">
+    <h1>Edit Department</h1>
+
+    <form id="departmentForm">
+      <label for="departmentID">Department ID:</label>
+      <input
+        type="text"
+        id="departmentID"
+        name="departmentID"
+        readonly
+      /><br /><br />
+
+      <label for="departmentName">Department Name:</label>
+      <input
+        type="text"
+        id="departmentName"
+        name="departmentName"
+        required
+      /><br /><br />
+
+      <label for="departmentManager">Department Manager:</label>
+      <input
+        type="text"
+        id="departmentManager"
+        name="departmentManager"
+        required
+      /><br /><br />
+
+      <button type="button" onclick="updateDepartment()">Update</button>
+      <button type="button" onclick="deleteDepartment()">Delete</button>
+    </form>
+
+    <h2>Add Employee to Department</h2>
+    <form id="addEmployeeForm">
+      <label for="employeeSelect">Select Employee:</label>
+      <select id="employeeSelect" name="employeeSelect"></select>
+      <button type="button" onclick="addEmployeeToDepartment()">Add</button>
+    </form>
+
+    <script>
+      async function initializePage() {
+        const departmentId = Number(getParameterByName("id"));
+        if (!departmentId) {
+          console.error("Department ID not provided in the URL.");
+          return;
+        }
+
+        const departmentData = await fetch(
+          `http://localhost:3000/department/${departmentId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log(departmentData);
+        if (departmentData.ok) {
+          const department = await departmentData.json();
+          console.log(department);
+
+          const employeData = await fetch(`http://localhost:3000/employe`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          console.log(employeData);
+          if (employeData.ok) {
+            const employe = await employeData.json();
+            console.log(employe);
+
+            const manager = await employe.find(
+              (x) => x.FullName === department.manager
+            );
+            console.log(manager);
+
+            document.getElementById("departmentID").value = department.id;
+            document.getElementById("departmentName").value = department.name;
+            document.getElementById("departmentManager").value =
+              manager.FullName;
+          } else {
+            console.error("Failed to fetch department data");
+          }
+
+          const employeesData = await fetch(`http://localhost:3000/employe`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (employeesData.ok) {
+            const employees = await employeesData.json();
+            console.log(employees);
+            console.log(departmentId);
+
+            const filteredEmployees = employees.filter(
+              (x) => x.departmentId !== +departmentId
+            );
+            console.log(filteredEmployees);
+
+            const employeeSelect = document.getElementById("employeeSelect");
+
+          filteredEmployees.forEach((employee) => {
+              const option = document.createElement("option");
+              option.value = employee.id;
+              option.text = employee.FullName;
+              employeeSelect.appendChild(option);
+            });
+          } else {
+            console.error("Failed to fetch employees data");
+          }
+        }
+      }
+
+      const updateDepartment = async () => {
+        const updatedDepartment = {
+          id: document.getElementById("departmentID").value,
+          name: document.getElementById("departmentName").value,
+          manager: document.getElementById("departmentManager").value,
+        };
+        console.log(updatedDepartment);
+        const departmentId = Number(getParameterByName("id"));
+        console.log(departmentId);
+        const response = await fetch(
+          `http://localhost:3000/department/${departmentId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedDepartment),
+          }
+        );
+        if (response.ok) {
+          console.log("Department updated successfully");
+        } else {
+          console.error("Failed to update department data");
+        }
+      };
+
+      async function deleteDepartment() {
+        const departmentId = document.getElementById("ID").value;
+
+        const response = await fetch(
+          `http://localhost:3000/department/${departmentId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.ok) {
+          console.log("Department deleted successfully");
+        } else {
+          console.error("Failed to delete department");
+        }
+      }
+
+      async function addEmployeeToDepartment() {
+
+
+        const selectedEmployeeId = document.getElementById("employeeSelect").value;
+        console.log(selectedEmployeeId)
+  if (!selectedEmployeeId) {
+    console.error("No employee selected.");
+    return;
+  }
+
+  const departmentId = Number(getParameterByName("id"));
+  const requestData = {
+    departmentId:departmentId , 
+    id:selectedEmployeeId,
+   
+  };
+  console.log(departmentId)
+
+console.log(requestData)
+console.log(selectedEmployeeId)
+
+  const response =  fetch(`http://localhost:3000/employe/${selectedEmployeeId}`, {
+    method: "PUT", 
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestData),
+  });
+
+  if (response.ok) {
+    console.log("Employee added to the department successfully.");
+    const employeeSelect = document.getElementById("employeeSelect");
+    const selectedOption = employeeSelect.querySelector(`[value="${selectedEmployeeId}"]`);
+    if (selectedOption) {
+      employeeSelect.removeChild(selectedOption);
+    }
+  } else {
+    console.error("Failed to add employee to the department.");
+  }
+
+      }
+
+      function getParameterByName(name, url = window.location.href) {
+        name = name.replace(/[\[\]]/g, "\\$&");
+        const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+        const results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return "";
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+
+
+      }
+    </script>
+  </body>
+</html> -->
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Department</title>
+
+    <!-- Add a link to your external CSS file (style.css) or include your CSS code here -->
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <style>
+      /* Add your inline CSS here if needed */
+
+      .logout-link {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        background-color: #007bff; /* Background color for the bottom bar */
+        color: white; /* Text color for the bottom bar */
+        padding: 10px;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        margin: 0;
+        padding: 0;
+      }
+
+      h1 {
+        background-color: #007bff;
+        color: #fff;
+        padding: 20px;
+      }
+
+      form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin: 20px;
+      }
+
+      label {
+        display: block;
+        margin: 10px 0;
+        font-weight: bold;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      select {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      button {
+        background-color: #007bff;
+        color: #fff;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #007bff;
+      }
+    </style>
+  </head>
+  <body onload="initializePage()">
+    <h1>Edit Department</h1>
+
+    <form id="departmentForm">
+      <label for="departmentID">Department ID:</label>
+      <input
+        type="text"
+        id="departmentID"
+        name="departmentID"
+        readonly
+      /><br /><br />
+
+      <label for="departmentName">Department Name:</label>
+      <input
+        type="text"
+        id="departmentName"
+        name="departmentName"
+        required
+      /><br /><br />
+
+      <label for="departmentManager">Department Manager:</label>
+      <input
+        type="text"
+        id="departmentManager"
+        name="departmentManager"
+        required
+      /><br /><br />
+
+      <button type="button" onclick="updateDepartment()">Update</button>
+      <button type="button" onclick="deleteDepartment()">Delete</button>
+    </form>
+
+    <h2>Add Employee to Department</h2>
+    <form id="addEmployeeForm">
+      <label for="employeeSelect">Select Employee:</label>
+      <select id="employeeSelect" name="employeeSelect"></select>
+      <button type="button" onclick="addEmployeeToDepartment()">Add</button>
+    </form>
+
+    <script>
+ async function initializePage() {
+        const departmentId = Number(getParameterByName("id"));
+        if (!departmentId) {
+          console.error("Department ID not provided in the URL.");
+          return;
+        }
+
+        const departmentData = await fetch(
+          `http://localhost:3000/department/${departmentId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log(departmentData);
+        if (departmentData.ok) {
+          const department = await departmentData.json();
+          console.log(department);
+
+          const employeData = await fetch(`http://localhost:3000/employe`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          console.log(employeData);
+          if (employeData.ok) {
+            const employe = await employeData.json();
+            console.log(employe);
+
+            const manager = await employe.find(
+              (x) => x.FullName === department.manager
+            );
+            console.log(manager);
+
+            document.getElementById("departmentID").value = department.id;
+            document.getElementById("departmentName").value = department.name;
+            document.getElementById("departmentManager").value =
+              manager.FullName;
+          } else {
+            console.error("Failed to fetch department data");
+          }
+
+          const employeesData = await fetch(`http://localhost:3000/employe`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (employeesData.ok) {
+            const employees = await employeesData.json();
+            console.log(employees);
+            console.log(departmentId);
+
+            const filteredEmployees = employees.filter(
+              (x) => x.departmentId !== +departmentId
+            );
+            console.log(filteredEmployees);
+
+            const employeeSelect = document.getElementById("employeeSelect");
+
+          filteredEmployees.forEach((employee) => {
+              const option = document.createElement("option");
+              option.value = employee.id;
+              option.text = employee.FullName;
+              employeeSelect.appendChild(option);
+            });
+          } else {
+            console.error("Failed to fetch employees data");
+          }
+        }
+
+        const Employesurl = "http://localhost:3000/Employes";
+        const accessToken = sessionStorage["accessToken"];
+
+        const Response = await fetch(Employesurl, {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        });
+
+        const employeesData = await Response.json();
+        console.log(employeesData);
+
+        const actionsFile = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+        const actionFile = await actionsFile.json();
+        
+
+const userAction = await actionFile.action.filter((x) => +x.id  === +employeesData.id )
+
+const actionPerformed =   userAction[0].actionPerformed
+console.log(actionPerformed)
+
+const maxAction = userAction[0].maxAction
+
+
+
+        
+let sessionViews = sessionStorage.getItem("sessionViews")
+let sessionAction = sessionStorage.getItem("sessionAction")
+console.log(sessionViews)
+console.log(sessionAction)
+
+        if (sessionViews === null || isNaN(sessionViews)) {
+        
+        sessionViews = 1
+        sessionStorage.setItem('sessionViews',  sessionViews);
+
+
+        sessionAction = sessionAction + sessionViews
+        sessionStorage.setItem('sessionAction',  sessionAction) ;
+      }
+      else if (sessionAction >= maxAction) {
+        sessionStorage.setItem("sessionViews", null)
+        window.location.href = "./Login.html"
+      }
+      else {
+        sessionAction = +sessionAction + 1
+        sessionStorage.setItem('sessionAction',  sessionAction)
+      }
+      console.log(sessionStorage.getItem("sessionViews"));
+      console.log(sessionStorage.getItem("sessionAction"));
+
+
+
+        
+      }
+
+      const updateDepartment = async () => {
+        const updatedDepartment = {
+          id: document.getElementById("departmentID").value,
+          name: document.getElementById("departmentName").value,
+          manager: document.getElementById("departmentManager").value,
+        };
+        console.log(updatedDepartment);
+        const departmentId = Number(getParameterByName("id"));
+        console.log(departmentId);
+        const response = await fetch(
+          `http://localhost:3000/department/${departmentId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedDepartment),
+          }
+        );
+        if (response.ok) {
+          console.log("Department updated successfully");
+        } else {
+          console.error("Failed to update department data");
+        }
+      };
+
+      async function deleteDepartment() {
+        const departmentId = Number(getParameterByName("id"));
+        console.log(departmentId)
+
+        const response = await fetch(
+          `http://localhost:3000/department/${departmentId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.ok) {
+          console.log("Department deleted successfully");
+        } else {
+          console.error("Failed to delete department");
+        }
+      }
+
+      async function addEmployeeToDepartment() {
+
+
+        const selectedEmployeeId = document.getElementById("employeeSelect").value;
+        console.log(selectedEmployeeId)
+  if (!selectedEmployeeId) {
+    console.error("No employee selected.");
+    return;
+  }
+
+  const departmentId = Number(getParameterByName("id"));
+  const requestData = {
+    departmentId:departmentId , 
+    id:selectedEmployeeId,
+   
+  };
+  console.log(departmentId)
+
+console.log(requestData)
+console.log(selectedEmployeeId)
+
+  const response =  fetch(`http://localhost:3000/employe/${selectedEmployeeId}`, {
+    method: "PUT", 
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestData),
+  });
+
+  if (response.ok) {
+    console.log("Employee added to the department successfully.");
+    const employeeSelect = document.getElementById("employeeSelect");
+    const selectedOption = employeeSelect.querySelector(`[value="${selectedEmployeeId}"]`);
+    if (selectedOption) {
+      employeeSelect.removeChild(selectedOption);
+    }
+  } else {
+    console.error("Failed to add employee to the department.");
+  }
+
+  
+
+
+      }
+
+      function getParameterByName(name, url = window.location.href) {
+        name = name.replace(/[\[\]]/g, "\\$&");
+        const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+        const results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return "";
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+
+
+
+        
+
+      }   
+       </script>
+
+<div class="logout-link">
+  <a href="./Login.html">Log-Out</a>
+</div>
+  </body>
+</html>

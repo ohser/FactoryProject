@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Employee</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        .logout-link {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background-color: #007bff; /* Background color for the bottom bar */
+            color: white; /* Text color for the bottom bar */
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            width: 90%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button[type="button"] {
+            background-color: #007bff;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .cancel-button {
+            margin-left: 10px;
+        }
+
+        .logout-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>New Employee</h1>
+        <form id="DepartmentForm">
+            <label for="ID">ID:</label>
+            <input type="text" id="ID" name="ID" required /><br /><br />
+
+            <label for="startWorkYear">Start Work Year:</label>
+            <input type="text" id="startWorkYear" name="startWorkYear" required /><br /><br />
+
+            <label for="shift">Shift:</label>
+            <input type="text" id="shift" name="shift" required /><br /><br />
+
+            <label for="departmentId">Department ID:</label>
+            <input type="text" id="departmentId" name="departmentId" required /><br /><br />
+
+            <label for="FullName">Full Name:</label>
+            <input type="text" id="FullName" name="FullName" required /><br /><br />
+
+            <button type="button" onclick="updateEmployee()">Save</button>
+            <button type="button" onclick="cancel()" class="cancel-button">Cancel</button>
+        </form>
+    </div>
+
+    <div class="logout-link">
+        <a href="./Login.html">Log-Out</a>
+    </div>
+
+    <script>
+        const updateEmployee = async () => {
+            const EmployeeData = {
+                departmentId: document.getElementById("departmentId").value,
+                shift: document.getElementById("shift").value,
+                FullName: document.getElementById("FullName").value,
+                startWorkYear: document.getElementById("startWorkYear").value,
+            };
+
+            const Employees = await fetch("http://localhost:3000/employe", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(EmployeeData),
+            });
+
+            const Employesurl = "http://localhost:3000/Employes";
+        const accessToken = sessionStorage["accessToken"];
+
+        const Responses = await fetch(Employesurl, {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        });
+
+        const employeesDatas = await Responses.json();
+        console.log(employeesDatas);
+
+        const actionsFile = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+        const actionFile = await actionsFile.json();
+        
+
+const userAction = await actionFile.action.filter((x) => +x.id  === +employeesDatas.id )
+
+const actionPerformed =   userAction[0].actionPerformed
+console.log(actionPerformed)
+
+const maxAction = userAction[0].maxAction
+
+
+
+        
+let sessionViews = sessionStorage.getItem("sessionViews")
+let sessionAction = sessionStorage.getItem("sessionAction")
+console.log(sessionViews)
+console.log(sessionAction)
+
+        if (sessionViews === null || isNaN(sessionViews)) {
+        
+        sessionViews = 1
+        sessionStorage.setItem('sessionViews',  sessionViews);
+
+
+        sessionAction = sessionAction + sessionViews
+        sessionStorage.setItem('sessionAction',  sessionAction) ;
+      }
+      else if (sessionAction >= maxAction) {
+        sessionStorage.setItem("sessionViews", null)
+        window.location.href = "./Login.html"
+      }
+      else {
+        sessionAction = +sessionAction + 1
+        sessionStorage.setItem('sessionAction',  sessionAction)
+      }
+      console.log(sessionStorage.getItem("sessionViews"));
+      console.log(sessionStorage.getItem("sessionAction"));
+
+        };
+
+        function cancel() {
+            window.location.href = '/employe';
+        }
+    </script>
+    <div class="logout-link">
+        <a href="./Login.html">Log-Out</a>
+    </div>
+</body>
+</html>

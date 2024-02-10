@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Department</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+
+      h1 {
+        background-color: #007bff;
+        color: #fff;
+        padding: 20px;
+        text-align: center;
+      }
+
+      table {
+        width: 80%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        border: 1px solid #ddd;
+        background-color: #fff;
+      }
+
+      /* CSS for the fixed bottom position */
+      .logout-link {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        background-color: #333; /* Background color for the bottom bar */
+        color: white; /* Text color for the bottom bar */
+        padding: 10px;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background-color: #007bff;
+        color: #fff;
+      }
+
+      a {
+        text-decoration: none;
+        color: #007bff;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body onload="getDepartment()">
+    <h1>Department Page</h1>
+
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Department Name</th>
+          <th>Department Manager</th>
+          <th>Employees Names</th>
+        </tr>
+      </thead>
+      <tbody id="DepartmentTableBody"></tbody>
+    </table>
+
+    <script>
+      const getDepartment = async () => {
+        const Response = await fetch("http://localhost:3000/department", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const departmentData = await Response.json();
+        console.log(departmentData);
+
+        const arr = await fetch("http://localhost:3000/Employes/em", {
+          method: "GET",
+        });
+        const employeesData = await arr.json();
+        console.log(employeesData);
+
+        const DepartmentTable = document.getElementById("DepartmentTableBody");
+
+        departmentData.forEach(async (Department) => {
+          const row = document.createElement("tr");
+          const DepartmentNameCell = document.createElement("td");
+          const departmentManagerCell = document.createElement("td");
+          const employeeNameCell = document.createElement("td");
+
+          const departmentLink = document.createElement("a");
+          departmentLink.textContent = Department.name;
+          departmentLink.href = `./EditDepartment.html?id=${Department.id}`;
+          DepartmentNameCell.appendChild(departmentLink);
+
+          const departmentManagername = await employeesData.find(
+            (x) => x.FullName === Department.manager
+          );
+          console.log(departmentManagername);
+
+          departmentManagerCell.textContent = departmentManagername.FullName;
+
+          const departmentEmployees = employeesData.filter(
+            (employee) => employee.departmentId === +Department.id
+          );
+          console.log(departmentEmployees);
+
+          departmentEmployees.forEach((employee, index) => {
+            const employeeLink = document.createElement("a");
+            employeeLink.textContent = employee.FullName;
+
+            if (index < departmentEmployees.length - 1) {
+              employeeLink.textContent += ", ";
+            }
+
+            employeeLink.href = `./EditEmployee.html?id=${employee.id}`;
+            employeeNameCell.appendChild(employeeLink);
+          });
+
+          row.appendChild(DepartmentNameCell);
+          row.appendChild(departmentManagerCell);
+          row.appendChild(employeeNameCell);
+
+          DepartmentTable.appendChild(row);
+        });
+
+        const Employesurl = "http://localhost:3000/Employes";
+        const accessToken = sessionStorage["accessToken"];
+
+        const Responses = await fetch(Employesurl, {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        });
+
+        const employeesDatas = await Responses.json();
+        console.log(employeesDatas);
+
+        const actionsFile = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+        const actionFile = await actionsFile.json();
+        
+
+const userAction = await actionFile.action.filter((x) => +x.id  === +employeesDatas.id )
+
+const actionPerformed =   userAction[0].actionPerformed
+console.log(actionPerformed)
+
+const maxAction = userAction[0].maxAction
+
+
+
+        
+let sessionViews = sessionStorage.getItem("sessionViews")
+let sessionAction = sessionStorage.getItem("sessionAction")
+console.log(sessionViews)
+console.log(sessionAction)
+
+        if (sessionViews === null || isNaN(sessionViews)) {
+        
+        sessionViews = 1
+        sessionStorage.setItem('sessionViews',  sessionViews);
+
+
+        sessionAction = sessionAction + sessionViews
+        sessionStorage.setItem('sessionAction',  sessionAction) ;
+      }
+      else if (sessionAction >= maxAction) {
+        sessionStorage.setItem("sessionViews", null)
+        window.location.href = "./Login.html"
+      }
+      else {
+        sessionAction = +sessionAction + 1
+        sessionStorage.setItem('sessionAction',  sessionAction)
+      }
+      console.log(sessionStorage.getItem("sessionViews"));
+      console.log(sessionStorage.getItem("sessionAction"));
+
+      };
+    </script>
+    <div class="logout-link">
+      <a href="./Login.html">Log-Out</a>
+    </div>
+  </body>
+</html>

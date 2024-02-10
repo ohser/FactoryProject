@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Users Page</title>
+  </head>
+  <body onload="getUsers()">
+    <h1>Users Page</h1>
+   
+
+    <table border="1">
+      <thead>
+        <tr>
+          <th>User Name</th>
+          <th>Maximum Actions Allowed</th>
+          <th>Number of Actions Performed</th>
+        </tr>
+      </thead>
+      <tbody id="UserTableBody"></tbody>
+    </table>
+
+    <script>
+      const getUsers = async () => {
+        const action = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+        const actionFile = await action.json();
+        console.log(actionFile.action);
+
+        const UserTableBody = document.getElementById("UserTableBody");
+
+        actionFile.action.forEach(async (user) => {
+          const row = document.createElement("tr");
+          const userNameCell = document.createElement("td");
+          const MaximumActions = document.createElement("td");
+          const ActionsPerformed = document.createElement("td");
+
+          userNameCell.textContent = user.name;
+          MaximumActions.textContent = user.maxAction;
+          ActionsPerformed.textContent = user.actionPerformed;
+
+          row.appendChild(userNameCell);
+          row.appendChild(MaximumActions);
+          row.appendChild(ActionsPerformed);
+
+          UserTableBody.appendChild(row);
+        });
+      };
+    </script>
+  </body>
+</html>

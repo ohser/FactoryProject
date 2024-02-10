@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Employee</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007BFF;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #007BFF;
+            color: #fff;
+        }
+        .logout-link {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background-color: #333; /* Background color for the bottom bar */
+            color: white; /* Text color for the bottom bar */
+            padding: 10px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body onload="getemployees()">
+    <header>
+        <h1>Edit Employee</h1>
+    </header>
+
+    <div class="container">
+        <form id="employeeForm">
+            <label for="ID">ID:</label>
+            <input type="text" id="ID" name="ID" required /><br /><br />
+
+            <label for="fullName">Full Name:</label>
+            <input type="text" id="fullName" name="fullName" required /><br /><br />
+
+            <label for="department">Department:</label>
+            <input type="text" id="department" name="department" required /><br /><br />
+
+            <label for="Start Work Year">Start Work Year:</label>
+            <input type="text" id="SWY" name="Start Work Year" required /><br /><br />
+
+            
+
+            <button type="button" onclick="updateEmployee()">Update</button>
+            <button type="button" onclick="deleteEmployee()">Delete</button>
+        </form>
+
+        <h2>Shifts</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Starting Hour</th>
+                    <th>Ending Hour</th>
+                </tr>
+            </thead>
+            <tbody id="shiftTableBody">
+            </tbody>
+        </table>
+
+        <h2>Register to Existing Shift</h2>
+        <select id="existingShifts">
+        </select>
+        <button type="button" onclick="registerToShift()">Register</button>
+    </div>
+
+    <script>
+         const getemployees = async () => {
+        const Employesurl = "http://localhost:3000/department";
+
+        const Response = await fetch(Employesurl, { method: "GET" });
+
+        const employeesData = await Response.json();
+        console.log(employeesData);
+
+        
+
+        const accessToken = sessionStorage["accessToken"];
+        
+
+        const user = await fetch(Employesurl, {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        }) 
+
+        const userData = await user.json();
+          console.log(userData);
+        
+const userid = async ( ) => {
+
+// userData.forEach((x) => )
+
+        const Respons = await fetch(`http://localhost:3000/EditEmployee?id=${userData.id}`, {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        });
+
+        const employeesDat = await Respons.json();
+        console.log(employeesDat);
+
+        const employeeTOedit = employeesData.find(
+          (x) => x.id === employeesDat.id
+        );
+        console.log(employeeTOedit);
+        document.getElementById("ID").value = employeeTOedit.id;
+        document.getElementById("fullName").value = employeeTOedit.FullName;
+        document.getElementById("department").value =
+          employeeTOedit.departmentId;
+        document.getElementById("SWY").value = employeeTOedit.startWorkYear;
+
+        const shifts = await fetch("http://localhost:3000/shift", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "x-access-token": accessToken,
+          },
+        });
+
+        const employeesshifts = await shifts.json();
+        console.log(employeesshifts);
+
+        const employeesshift = employeesshifts.find(
+          (x) => x.id === +employeeTOedit.shift
+        );
+        console.log(employeesshift);
+
+        const shiftTableBody = document.getElementById("shiftTableBody");
+        shiftTableBody.innerHTML = "";
+
+        if (employeesshift) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+      <td>${employeesshift.id}</td>
+      <td>${employeesshift.date}</td>
+      <td>${employeesshift.startingHour}</td>
+      <td>${employeesshift.endingHour}</td>
+  `;
+          shiftTableBody.appendChild(row);
+        } else {
+          console.log(error)
+        }
+
+        const existingShifts = [
+          { id: 1, date: "2023-09-23" },
+          { id: 2, date: "2023-09-23" },
+          { id: 3, date: "2024-09-23" },
+          { id: 4, date: "2024-09-23" },
+        ];
+
+        const existingShiftsSelect = document.getElementById("existingShifts");
+        existingShiftsSelect.innerHTML =
+          '<option value="">Select an Existing Shift</option>';
+
+        existingShifts.forEach((existingShift) => {
+          const option = document.createElement("option");
+          option.value = existingShift.id;
+          option.textContent = existingShift.id;
+          existingShiftsSelect.appendChild(option);
+        });
+      }
+
+      
+      const Employesurls = "http://localhost:3000/Employes";
+        const accessTokens = sessionStorage["accessToken"];
+
+        const Responses = await fetch(Employesurls, {
+          method: "GET",
+          headers: { "x-access-token": accessTokens },
+        });
+
+        const employeesDatas = await Responses.json();
+        console.log(employeesData);
+
+        const actionsFile = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+        const actionFile = await actionsFile.json();
+        console.log(actionFile.action)
+
+
+const userAction = await actionFile.action.filter((x) => +x.id  === +employeesDatas.id )
+console.log(userAction)
+
+const actionPerformed =   userAction[0].actionPerformed
+console.log(actionPerformed)
+
+const maxAction = userAction[0].maxAction
+
+
+
+        
+let sessionViews = sessionStorage.getItem("sessionViews")
+let sessionAction = sessionStorage.getItem("sessionAction")
+console.log(sessionViews)
+console.log(sessionAction)
+
+        if (sessionViews === null || isNaN(sessionViews)) {
+        
+        sessionViews = 1
+        sessionStorage.setItem('sessionViews',  sessionViews);
+
+
+        sessionAction = sessionAction + sessionViews
+        sessionStorage.setItem('sessionAction',  sessionAction) ;
+      }
+      else if (sessionAction >= maxAction) {
+        sessionStorage.setItem("sessionViews", null)
+        window.location.href = "./Login.html"
+      }
+      else {
+        sessionAction = +sessionAction + 1
+        sessionStorage.setItem('sessionAction',  sessionAction)
+      }
+      console.log(sessionStorage.getItem("sessionViews"));
+      console.log(sessionStorage.getItem("sessionAction"));
+
+
+
+    
+    };
+
+      async function updateEmployee() {
+        const updatedEmployee = {
+          FullName: document.getElementById("fullName").value,
+          departmentId: document.getElementById("department").value,
+          startWorkYear: document.getElementById("SWY").value,
+          id: document.getElementById("ID").value,
+        };
+
+        const accessToken = sessionStorage["accessToken"];
+
+        const Respons = await fetch("http://localhost:3000/Employes", {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        });
+
+        const employeesDat = await Respons.json();
+        console.log(employeesDat);
+
+        const updateUrl = await fetch(
+          `http://localhost:3000/employe/${employeesDat.id}`,
+          {
+            method: "GET",
+          }
+        );
+        console.log(updateUrl);
+
+        const UPemployee = await updateUrl.json();
+        console.log(UPemployee);
+
+        await fetch(`http://localhost:3000/employe/${updatedEmployee.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "x-access-token": accessToken,
+          },
+          body: JSON.stringify(updatedEmployee),
+        })
+          .then((response) => {
+            if (response.ok) {
+              console.log("The employee data was successfully updated");
+            } else {
+              console.error("Failed to update employee data");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+
+      async function deleteEmployee() {
+        const accessToken = sessionStorage["accessToken"];
+
+        try {
+          const response = await fetch("http://localhost:3000/Employes", {
+            method: "GET",
+            headers: { "x-access-token": accessToken },
+          });
+
+          if (response.ok) {
+            const employeesData = await response.json();
+            console.log(employeesData);
+
+            const employeeId = employeesData.id;
+
+            const deleteResponse = await fetch(
+              `http://localhost:3000/employe/${employeeId}`,
+              {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-access-token": accessToken,
+                },
+              }
+            );
+
+            if (deleteResponse.ok) {
+              console.log("Employee deleted successfully");
+            } else {
+              console.error("Failed to delete employee");
+            }
+          } else {
+            console.error("Failed to fetch employee data");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+
+     async function registerToShift() {
+        
+        const selectedShiftId = document.getElementById("existingShifts").value;
+        const accessToken = sessionStorage["accessToken"];
+
+        const shifts = await fetch("http://localhost:3000/shift", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "x-access-token": accessToken,
+          },
+        });
+
+        const employeesshifts = await shifts.json();
+        console.log(employeesshifts);
+
+        const employeesshift = employeesshifts.find(
+          (x) => x.id === +selectedShiftId
+        );
+        console.log(employeesshift);
+        
+        const shiftTableBody = document.getElementById("shiftTableBody");
+       
+
+        if (employeesshift) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+      <td>${employeesshift.id}</td>
+      <td>${employeesshift.date}</td>
+      <td>${employeesshift.startingHour}</td>
+      <td>${employeesshift.endingHour}</td>
+  `;
+          shiftTableBody.appendChild(row);
+        } else {
+          console.log(error)
+        }
+
+
+        }
+    </script>
+    <div class="logout-link">
+        <a href="./Login.html">Log-Out</a>
+    </div>
+</body>
+</html>

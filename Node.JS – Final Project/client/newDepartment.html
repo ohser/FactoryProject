@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <title>New Department</title>
+  </head>
+  <body>
+    <form id="DepartmentForm">
+      <label for="ID">ID:</label>
+      <input type="text" id="ID" name="ID" required /><br /><br />
+
+      <label for="name">name:</label>
+      <input type="text" id="name" name="name" required /><br /><br />
+
+      <label for="manager">manager:</label>
+      <input type="text" id="manager" name="manager" required /><br /><br />
+
+      <button type="button" onclick="updateDepartment()">Save</button>
+      <button type="button" onclick="cancel()">Cancel</button>
+    </form>
+
+    <script>
+      const updateDepartment = async () => {
+        const departmentData = {
+          name: document.getElementById("name").value,
+          manager: document.getElementById("manager").value,
+          id: document.getElementById("ID").value,
+        };
+
+        const departments = await fetch("http://localhost:3000/department", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json", 
+          },
+          body: JSON.stringify(departmentData), 
+        });
+
+        const Employesurl = "http://localhost:3000/Employes";
+        const accessToken = sessionStorage["accessToken"];
+
+        const Responses = await fetch(Employesurl, {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        });
+
+        const employeesDatas = await Responses.json();
+        console.log(employeesDatas);
+
+        const actionsFile = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+        const actionFile = await actionsFile.json();
+        
+
+const userAction = await actionFile.action.filter((x) => +x.id  === +employeesDatas.id )
+
+const actionPerformed =   userAction[0].actionPerformed
+console.log(actionPerformed)
+
+const maxAction = userAction[0].maxAction
+
+
+
+        
+let sessionViews = sessionStorage.getItem("sessionViews")
+let sessionAction = sessionStorage.getItem("sessionAction")
+console.log(sessionViews)
+console.log(sessionAction)
+
+        if (sessionViews === null || isNaN(sessionViews)) {
+        
+        sessionViews = 1
+        sessionStorage.setItem('sessionViews',  sessionViews);
+
+
+        sessionAction = sessionAction + sessionViews
+        sessionStorage.setItem('sessionAction',  sessionAction) ;
+      }
+      else if (sessionAction >= maxAction) {
+        sessionStorage.setItem("sessionViews", null)
+        window.location.href = "./Login.html"
+      }
+      else {
+        sessionAction = +sessionAction + 1
+        sessionStorage.setItem('sessionAction',  sessionAction)
+      }
+      console.log(sessionStorage.getItem("sessionViews"));
+      console.log(sessionStorage.getItem("sessionAction"));
+
+      };
+
+      function cancel() {
+    
+        window.location.href = './Department.html'; 
+  }
+    </script>
+    
+    <div >
+        <a href="./Login.html">Log-Out</a>
+    </div>
+  </body>
+</html>

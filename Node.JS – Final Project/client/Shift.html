@@ -1,0 +1,286 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Page</title>
+    <style>
+        .logout-link {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background-color: #007BFF; /* Background color for the bottom bar */
+            color: white; /* Text color for the bottom bar */
+            padding: 10px;
+        }
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            text-align: center;
+            background-color: #007BFF;
+        }
+        h2 {
+            margin-top: 20px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            display: block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <h1>Shift Page</h1>
+        <hr>
+        <h2>New Shifts</h2>
+        <label for="date">Date:</label>
+        <input type="text" id="date" required /><br />
+        <label for="startingHour">Starting Hour:</label>
+        <input type="text" id="startingHour" required /><br />
+        <label for="endingHour">Ending Hour:</label>
+        <input type="text" id="endingHour" required /><br />
+        <label for="id">ID:</label>
+        <input type="text" id="id" required /><br />
+        <button onclick="addShift">Add Shift</button>
+        <p class="error" id="errorMessage"></p>
+        <h2>Edit Shifts</h2>
+        <label for="date">Date:</label>
+        <input type="text" id="dat" required /><br />
+        <label for="startingHour">Starting Hour:</label>
+        <input type="text" id="startingHou" required /><br />
+        <label for="endingHour">Ending Hour:</label>
+        <input type="text" id="endingHou" required /><br />
+        <label for="id">ID:</label>
+        <input type="text" id="i" required /><br />
+        <button onclick="EditShift">Edit Shift</button>
+        <p class="error" id="errorMessage"></p>
+        <hr>
+
+
+        <h2>Edit Employe Shift</h2>
+        <label for="Employe">Employe ID:</label>
+        <input type="text" id="Employe" required /><br />
+        <label for="Shift">Shift ID:</label>
+        <input type="text" id="Shift" required /><br />
+        <button onclick="EditEmployeShift()">Edit Employe Shift</button>
+
+
+
+    </div>
+
+
+
+
+    <script>
+
+
+const EditEmployeShift = async () => {
+
+    const arr = await fetch(`http://localhost:3000/employe`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }})
+
+const employes = await arr.json()
+console.log(employes)
+const employefullname = Number(document.getElementById('Employe').value) 
+console.log(employefullname)
+const employe = await employes.find(x => x.id === +employefullname );
+console.log(employe)
+
+const id = employe.id;
+
+const shiftid = Number( document.getElementById('Shift').value)
+console.log(shiftid)
+const obj = {
+    shift: shiftid  ,
+    id: employe.id
+}
+console.log(employe.id)
+
+
+
+
+    try {
+                const resp = await fetch(`http://localhost:3000/employe/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(obj),
+                });
+
+                if (resp.status === 200) {
+                    const data = await resp.json();
+                    
+                } else {
+                    const data = await resp.json();
+                    document.getElementById('errorMessage').textContent = data.message;
+                }
+            } catch (error) {
+                console.error('An error occurred:', error);
+            }
+
+
+            const Employesurl = "http://localhost:3000/Employes";
+        const accessToken = sessionStorage["accessToken"];
+
+        const Responses = await fetch(Employesurl, {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        });
+
+        const employeesDatas = await Responses.json();
+        console.log(employeesDatas);
+
+        const actionsFile = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+        const actionFile = await actionsFile.json();
+        
+
+const userAction = await actionFile.action.filter((x) => +x.id  === +employeesDatas.id )
+
+const actionPerformed =   userAction[0].actionPerformed
+console.log(actionPerformed)
+
+const maxAction = userAction[0].maxAction
+
+
+
+        
+let sessionViews = sessionStorage.getItem("sessionViews")
+let sessionAction = sessionStorage.getItem("sessionAction")
+console.log(sessionViews)
+console.log(sessionAction)
+
+        if (sessionViews === null || isNaN(sessionViews)) {
+        
+        sessionViews = 1
+        sessionStorage.setItem('sessionViews',  sessionViews);
+
+
+        sessionAction = sessionAction + sessionViews
+        sessionStorage.setItem('sessionAction',  sessionAction) ;
+      }
+      else if (sessionAction >= maxAction) {
+        sessionStorage.setItem("sessionViews", null)
+        window.location.href = "./Login.html"
+      }
+      else {
+        sessionAction = +sessionAction + 1
+        sessionStorage.setItem('sessionAction',  sessionAction)
+      }
+      console.log(sessionStorage.getItem("sessionViews"));
+      console.log(sessionStorage.getItem("sessionAction"));
+
+
+        }
+
+
+
+
+
+
+const addShift = async ( ) =>
+{
+    const date = document.getElementById('date').value;
+    const endingHour = document.getElementById('endingHour').value;
+    const startingHour = document.getElementById('startingHour').value;
+    const id = document.getElementById('id').value;
+
+
+    
+    try {
+                const resp = await fetch('http://localhost:3000/shift', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date, endingHour,startingHour,id }),
+                });
+
+                if (resp.status === 200) {
+                    const data = await resp.json();
+                    
+                } else {
+                    const data = await resp.json();
+                    document.getElementById('errorMessage').textContent = data.message;
+                }
+            } catch (error) {
+                console.error('An error occurred:', error);
+            }
+
+
+}
+
+
+
+const EditShift = async ( ) =>
+{
+    const obj = {
+     date : document.getElementById('dat').value,
+     endingHour : document.getElementById('endingHou').value,
+     startingHour : document.getElementById('startingHou').value,
+     id : document.getElementById('i').value,
+    
+    }
+ const ID =  document.getElementById('i').value
+    
+    try {
+                const resp = await fetch(`http://localhost:3000/shift/${ID}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(obj),
+                });
+
+                if (resp.status === 200) {
+                    const data = await resp.json();
+                    
+                } else {
+                    const data = await resp.json();
+                    document.getElementById('errorMessage').textContent = data.message;
+                }
+            } catch (error) {
+                console.error('An error occurred:', error);
+            }
+        }
+
+
+
+
+    </script>
+    
+    <div class="logout-link">
+        <a href="./Login.html">Log-Out</a>
+    </div>
+</body>
+
+</html>

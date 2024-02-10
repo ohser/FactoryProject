@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+   
+      .title {
+        background-color: #007bff;
+
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+      }
+
+      body {
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+
+      .logout-link {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        background-color: #007bff;
+        color: white;
+        padding: 10px;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .new-employee-link {
+        margin-top: 20px;
+        text-align: center;
+      }
+
+      .new-employee-link a {
+        text-decoration: none;
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+      }
+
+      #departmentDropdown {
+        margin-top: 10px;
+      }
+
+      .NyClass {
+        width: 800px;
+        height: 120px;
+        margin-top: 10px;
+      }
+
+      .NyClass th {
+        background-color: #007bff;
+        color: white;
+      }
+
+      .NyClass tr:nth-child(even) {
+        background-color: #f0f0f0;
+      }
+
+      .NyClass a {
+        text-decoration: none;
+        color: #007bff;
+      }
+
+      .NyClass a:hover {
+        text-decoration: underline;
+      }
+    </style>
+    <title class="title">Employees Page</title>
+  </head>
+
+  <body onload="getEmployees()">
+    <h1 class="content">Employees Page</h1>
+
+    <h1 class="content">Welcome, <span id="userFullName"></span>!</h1>
+
+    <select id="departmentDropdown" class="content">
+      <option>all</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+    </select>
+
+    <table border="1" class="NyClass content">
+      <thead>
+        <tr>
+          <th>Full Name</th>
+          <th>Department</th>
+          <th>Shifts ( Data & Time )</th>
+        </tr>
+      </thead>
+      <tbody id="employeeTableBody"></tbody>
+    </table>
+
+    <div class="new-employee-link content">
+      <a href="./newEmployee.html">New Employee</a>
+    </div>
+
+    <script>
+      const Employesurl = "http://localhost:3000/Employes";
+      console.log(Employesurl);
+      const userUrl = "https://jsonplaceholder.typicode.com/users";
+
+      const getEmployees = async () => {
+        const accessToken = sessionStorage["accessToken"];
+
+        const Response = await fetch(Employesurl, {
+          method: "GET",
+          headers: { "x-access-token": accessToken },
+        });
+
+        const employeesData = await Response.json();
+        console.log(employeesData);
+
+        const resp = await fetch(userUrl, {
+          method: "GET",
+        });
+
+        const arr = await fetch("http://localhost:3000/Employes/em", {
+          method: "GET",
+        });
+        const err = await arr.json();
+        // console.log(err);
+
+        const shifts = await fetch("http://localhost:3000/shift", {
+          method: "GET",
+        });
+        const shift = await shifts.json();
+        // console.log(shift);
+
+        const Departments = await fetch("http://localhost:3000/department", {
+          method: "GET",
+        });
+        const Department = await Departments.json();
+        // console.log(Department);
+
+        const welcome = document.getElementById("userFullName");
+        const welcomename = err.find((x) => x.id === employeesData.id);
+        console.log(welcomename)
+
+        welcome.textContent = welcomename.FullName;
+
+        const filterEmployeesByDepartment = (selectedDepartmentId) => {
+          const filteredEmployees = err.filter(
+            (employee) => employee.departmentId === +selectedDepartmentId
+          );
+          // console.log(filteredEmployees)
+          return filteredEmployees;
+        };
+
+        const departmentDropdown =
+          document.getElementById("departmentDropdown");
+        departmentDropdown.addEventListener("change", () => {
+          const selectedDepartmentId = departmentDropdown.value;
+          // console.log(selectedDepartmentId)
+          const filteredEmployees =
+            filterEmployeesByDepartment(selectedDepartmentId);
+          displayFilteredEmployees(filteredEmployees);
+        });
+
+        const displayFilteredEmployees = (filteredEmployees) => {
+          const employeeTableBody =
+            document.getElementById("employeeTableBody");
+          employeeTableBody.innerHTML = "";
+
+          filteredEmployees.forEach(async (employee) => {
+            const row = document.createElement("tr");
+            const nameCell = document.createElement("td");
+            const departmentCell = document.createElement("td");
+            const shiftCell = document.createElement("td");
+
+            const employeeDepartment = await Department.find(
+              (x) => x.id === +employee.departmentId
+            );
+
+            const employeeshift = await shift.find(
+              (x) => x.id === +employee.shift
+            );
+
+            const departmentLink = document.createElement("a");
+            departmentLink.textContent = employeeDepartment.name;
+
+            const nameLink = document.createElement("a");
+            nameLink.textContent = employee.FullName;
+
+            departmentLink.href = `./editDepartment.html?id=${employee.id}`;
+
+            nameLink.href = `./EditEmployee.html?id=${employee.id}`;
+
+            nameCell.appendChild(nameLink);
+
+            departmentCell.appendChild(departmentLink);
+            shiftCell.textContent =
+              employeeshift.date +
+              "shift start:" +
+              employeeshift.startingHour +
+              "shift end:" +
+              employeeshift.endingHour;
+
+            row.appendChild(nameCell);
+            row.appendChild(departmentCell);
+            row.appendChild(shiftCell);
+
+            employeeTableBody.appendChild(row);
+          });
+        };
+
+        const employeeTable = document.getElementById("employeeTableBody");
+
+        err.forEach(async (employee) => {
+          const row = document.createElement("tr");
+          const nameCell = document.createElement("td");
+          const departmentCell = document.createElement("td");
+          const shiftCell = document.createElement("td");
+
+          const employeeDepartment = await Department.find(
+            (x) => x.id === +employee.departmentId
+          );
+
+          const employeeshift = await shift.find(
+            (x) => x.id === +employee.shift
+          );
+
+          const departmentLink = document.createElement("a");
+          departmentLink.textContent = employeeDepartment.name;
+
+          const nameLink = document.createElement("a");
+          nameLink.textContent = employee.FullName;
+
+          departmentLink.href = `./editDepartment.html?id=${employee.id}`;
+
+          nameLink.href = `./EditEmployee.html?id=${employee.id}`;
+
+          nameCell.appendChild(nameLink);
+
+          departmentCell.appendChild(departmentLink);
+          shiftCell.textContent =
+            employeeshift.date +
+            "shift start:" +
+            employeeshift.startingHour +
+            "shift end:" +
+            employeeshift.endingHour;
+
+          row.appendChild(nameCell);
+          row.appendChild(departmentCell);
+          row.appendChild(shiftCell);
+
+          employeeTable.appendChild(row);
+        });
+
+        const actions = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+
+        const action = await actions.json();
+
+        sessionStorage.setItem("action", JSON.stringify(action));
+
+        const sessionToken = sessionStorage.getItem("my-token");
+
+
+
+
+
+        const actionsFile = await fetch("http://localhost:3000/action", {
+          method: "GET",
+        });
+        const actionFile = await actionsFile.json();
+        
+
+const userAction = await actionFile.action.filter((x) => +x.id  === +employeesData.id )
+
+const actionPerformed =   userAction[0].actionPerformed
+console.log(actionPerformed)
+
+const maxAction = userAction[0].maxAction
+
+
+
+let sessionViews = sessionStorage.getItem("sessionViews")
+let sessionAction = sessionStorage.getItem("sessionAction")
+      console.log(sessionAction);
+      console.log(sessionViews);  
+
+      if (sessionViews === null || isNaN(sessionViews)) {
+        
+        sessionViews = 1
+        sessionStorage.setItem('sessionViews',  sessionViews);
+
+
+        sessionAction = sessionAction + sessionViews
+        sessionStorage.setItem('sessionAction',  sessionAction) ;
+      }
+      else if (sessionAction >= maxAction) {
+        sessionStorage.setItem("sessionViews", null)
+        window.location.href = "./Login.html"
+      }
+      else {
+        sessionAction = +sessionAction + 1
+        sessionStorage.setItem('sessionAction',  sessionAction)
+      }
+      console.log(sessionStorage.getItem("sessionViews"));
+      console.log(sessionStorage.getItem("sessionAction"));
+
+
+        }
+      
+      
+    </script>
+
+    <div class="logout-link">
+      <a href="./Login.html">Log-Out</a>
+    </div>
+  </body>
+</html>
